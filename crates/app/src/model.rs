@@ -398,6 +398,9 @@ pub struct Item {
     pub remote: Option<RemoteSpec>,
     #[serde(skip)]
     pub live: Option<Live>,
+    /// The session's temporary view while a torrent is being checked; never saved.
+    #[serde(skip)]
+    pub torrent_check: Option<(u64, u64)>,
     /// The engine's last view of this download (segments, connections).
     #[serde(skip)]
     pub snap: Option<mdm_engine::Snapshot>,
@@ -682,6 +685,7 @@ impl Item {
             direct: false,
             remote: None,
             live: None,
+            torrent_check: None,
             snap: None,
             login: None,
             context: Default::default(),
@@ -858,6 +862,16 @@ impl Item {
     pub fn status_text(&self) -> String {
         if let Some(at) = self.at_service() {
             return at;
+        }
+        if self.torrent.is_some()
+            && let Some((checked, total)) = self.torrent_check
+        {
+            let progress = percent(if total > 0 { checked as f64 / total as f64 } else { 0.0 });
+            return crate::i18n::fmt(
+                // i18n: a torrent's files are being checked; {percent} is how much is checked, e.g. "42%"
+                crate::i18n::t("Checking files {percent}"),
+                &[("percent", &progress)],
+            );
         }
         if self
             .snap

@@ -270,6 +270,8 @@ pub enum Phase {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Stats {
     pub phase: Phase,
+    /// Bytes read and verified so far while the session is initializing or rechecking.
+    pub checked: Option<u64>,
     /// Bytes of the chosen files that are there and checked.
     pub done: u64,
     /// Bytes of the chosen files.
@@ -706,6 +708,7 @@ impl Torrents {
         };
         Ok(Stats {
             phase,
+            checked: (phase == Phase::Checking).then_some(s.progress_bytes),
             done: s.progress_bytes,
             total: s.total_bytes,
             uploaded: s.uploaded_bytes,
