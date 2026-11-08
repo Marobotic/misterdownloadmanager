@@ -204,14 +204,14 @@ librqbit-peer-protocol = { git = "https://github.com/anefzaoui/rqbit.git", rev =
 librqbit-sha1-wrapper = { git = "https://github.com/anefzaoui/rqbit.git", rev = "ef50d87f4a9d5be9e3951b74f722433f9b46bd76" }
 librqbit-tracker-comms = { git = "https://github.com/anefzaoui/rqbit.git", rev = "ef50d87f4a9d5be9e3951b74f722433f9b46bd76" }
 librqbit-upnp = { git = "https://github.com/anefzaoui/rqbit.git", rev = "ef50d87f4a9d5be9e3951b74f722433f9b46bd76" }
-ecolor = { path = "../misterdownloadmanager-egui/crates/ecolor" }
-emath = { path = "../misterdownloadmanager-egui/crates/emath" }
-epaint = { path = "../misterdownloadmanager-egui/crates/epaint" }
-epaint_default_fonts = { path = "../misterdownloadmanager-egui/crates/epaint_default_fonts" }
-egui = { path = "../misterdownloadmanager-egui/crates/egui" }
-egui-winit = { path = "../misterdownloadmanager-egui/crates/egui-winit" }
-egui_glow = { path = "../misterdownloadmanager-egui/crates/egui_glow" }
-egui-wgpu = { path = "../misterdownloadmanager-egui/crates/egui-wgpu" }
-egui_extras = { path = "../misterdownloadmanager-egui/crates/egui_extras" }
-eframe = { path = "../misterdownloadmanager-egui/crates/eframe" }
+ecolor = { git = "https://github.com/Marobotic/egui.git", rev = "dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e" }
+emath = { git = "https://github.com/Marobotic/egui.git", rev = "dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e" }
+epaint = { git = "https://github.com/Marobotic/egui.git", rev = "dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e" }
+epaint_default_fonts = { git = "https://github.com/Marobotic/egui.git", rev = "dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e" }
+egui = { git = "https://github.com/Marobotic/egui.git", rev = "dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e" }
+egui-winit = { git = "https://github.com/Marobotic/egui.git", rev = "dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e" }
+egui_glow = { git = "https://github.com/Marobotic/egui.git", rev = "dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e" }
+egui-wgpu = { git = "https://github.com/Marobotic/egui.git", rev = "dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e" }
+egui_extras = { git = "https://github.com/Marobotic/egui.git", rev = "dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e" }
+eframe = { git = "https://github.com/Marobotic/egui.git", rev = "dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e" }
 winit = { git = "https://github.com/storytold/winit.git", rev = "a517b3846ee8457d84ee4975110bfda6797c44dc" }

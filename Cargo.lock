@@ -1908,6 +1908,7 @@ checksum = "d0881ea181b1df73ff77ffaaf9c7544ecc11e82fba9b5f27b262a3c73a332555"
 [[package]]
 name = "ecolor"
 version = "0.37.0"
+source = "git+https://github.com/Marobotic/egui.git?rev=dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e#dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e"
 dependencies = [
  "bytemuck",
  "emath",
@@ -1916,6 +1917,7 @@ dependencies = [
 [[package]]
 name = "eframe"
 version = "0.37.0"
+source = "git+https://github.com/Marobotic/egui.git?rev=dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e#dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e"
 dependencies = [
  "ahash",
  "bytemuck",
@@ -1951,6 +1953,7 @@ dependencies = [
 [[package]]
 name = "egui"
 version = "0.37.0"
+source = "git+https://github.com/Marobotic/egui.git?rev=dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e#dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e"
 dependencies = [
  "accesskit",
  "ahash",
@@ -1969,6 +1972,7 @@ dependencies = [
 [[package]]
 name = "egui-wgpu"
 version = "0.37.0"
+source = "git+https://github.com/Marobotic/egui.git?rev=dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e#dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e"
 dependencies = [
  "ahash",
  "bytemuck",
@@ -1987,6 +1991,7 @@ dependencies = [
 [[package]]
 name = "egui-winit"
 version = "0.37.0"
+source = "git+https://github.com/Marobotic/egui.git?rev=dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e#dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e"
 dependencies = [
  "accesskit_winit",
  "arboard",
@@ -2011,6 +2016,7 @@ dependencies = [
 [[package]]
 name = "egui_extras"
 version = "0.37.0"
+source = "git+https://github.com/Marobotic/egui.git?rev=dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e#dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e"
 dependencies = [
  "ahash",
  "egui",
@@ -2026,6 +2032,7 @@ dependencies = [
 [[package]]
 name = "egui_glow"
 version = "0.37.0"
+source = "git+https://github.com/Marobotic/egui.git?rev=dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e#dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e"
 dependencies = [
  "bytemuck",
  "egui",
@@ -2053,6 +2060,7 @@ dependencies = [
 [[package]]
 name = "emath"
 version = "0.37.0"
+source = "git+https://github.com/Marobotic/egui.git?rev=dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e#dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e"
 dependencies = [
  "bytemuck",
 ]
@@ -2121,6 +2129,7 @@ dependencies = [
 [[package]]
 name = "epaint"
 version = "0.37.0"
+source = "git+https://github.com/Marobotic/egui.git?rev=dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e#dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e"
 dependencies = [
  "ahash",
  "bytemuck",
@@ -2146,6 +2155,7 @@ dependencies = [
 [[package]]
 name = "epaint_default_fonts"
 version = "0.37.0"
+source = "git+https://github.com/Marobotic/egui.git?rev=dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e#dffb0a6035cc1e55c4f96f6105a5ec8bc444cc7e"
 
 [[package]]
 name = "equivalent"
