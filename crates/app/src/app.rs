@@ -1656,6 +1656,10 @@ impl App {
             let Ok(st) = t.stats(&spec.hash) else {
                 continue;
             };
+            // Keep the session's in-memory checking progress visible for stopped/complete
+            // torrents too; normal download progress is restored when initialization ends.
+            i.torrent_check = (st.phase == mdm_torrent::Phase::Checking)
+                .then_some((st.checked.unwrap_or(st.done), st.total));
             let sent = self.accountant.sent(&spec.hash, st.uploaded);
             if sent > 0 {
                 spec.uploaded += sent;
