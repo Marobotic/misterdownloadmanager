@@ -282,8 +282,8 @@ Everything below ships together, in version 0.5.0.
   protected, never downloaded ([#38](https://github.com/anefzaoui/misterdownloadmanager/issues/38))
 - ✅ Torrents: RSS feeds with download rules (words, episodes, each episode once, a folder per rule)
   ([#39](https://github.com/anefzaoui/misterdownloadmanager/issues/39))
-- ✅ Torrents: Recheck, Reannounce, Add trackers and Copy magnet link; files chosen while a
-  torrent runs; a `.torrent` file's web address opens Add torrent ([#39](https://github.com/anefzaoui/misterdownloadmanager/issues/39))
+- ✅ Torrents: Recheck, Reannounce, Add trackers and Copy magnet link; choose files while a
+  torrent runs or view them while stopped or complete; a `.torrent` file's web address opens Add torrent ([#39](https://github.com/anefzaoui/misterdownloadmanager/issues/39))
 - ✅ Link grabber: links in packages, looked up for name and size; archives (zip and tar
   built in; 7z and RAR need 7-Zip) extracted when they are downloaded
   ([#37](https://github.com/anefzaoui/misterdownloadmanager/issues/37)); collecting copied links
