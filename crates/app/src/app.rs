@@ -1646,6 +1646,11 @@ impl App {
             self.account_at += Duration::from_secs(dt);
         }
         let Some(t) = self.torrent_host.get() else {
+            // No session: no check is running, whatever the last numbers said.
+            self.torrent_resync.clear();
+            for i in self.items.iter_mut() {
+                i.torrent_check = None;
+            }
             return;
         };
         let limits = self.settings.sharing_limits();
@@ -1764,7 +1769,18 @@ impl App {
                 .items
                 .iter()
                 .any(|i| i.torrent.is_some() && i.status == Status::Complete);
+        // A torrent being checked (a Recheck of one that isn't running, its action still going,
+        // or its result not read yet) needs the session too: stopped as idle after a minute,
+        // the check died where it was and the list said "Checking 17%" for good.
+        let checking = !self.torrent_resync.is_empty()
+            || self.items.iter().any(|i| {
+                i.torrent_check.is_some()
+                    || i.torrent
+                        .as_ref()
+                        .is_some_and(|t| self.torrent_host.busy(&t.hash))
+            });
         let busy = sharing
+            || checking
             || self.torrent_dlg.is_some()
             || self
                 .items
