@@ -617,9 +617,6 @@
 #. message or event log entry in the main window
 #. event log entry: a torrent's files are being read and checked again (Recheck)
 	Checking every piece again	Checking every piece again
-#. text in the download list (sizes, speeds, status)
-#. a torrent's files are being checked; {percent} is how much is checked, e.g. "42%"
-	Checking files {percent}	Checking files {percent}
 #. text in the Help menu's windows (About, updates, shortcuts, Tell a friend)
 #. the trailing ... means it is still going on: keep it
 	Checking for updates...	Checking for updates...
@@ -640,6 +637,9 @@
 #. {name} = a file name; {n} = a number (keep the braces as they are)
 #. the trailing ... means it is still going on: keep it
 	Checking {name} ({n} of {total})...	Checking {name} ({n} of {total})...
+#. text in the download list (sizes, speeds, status)
+#. a torrent's status while its files are read and checked; {percent} is how much is checked, e.g. "42%"
+	Checking {percent}	Checking {percent}
 #. text in the Checksum window; text in the Link grabber window
 #. the trailing ... means it is still going on: keep it
 	Checking...	Checking...
