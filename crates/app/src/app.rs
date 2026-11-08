@@ -1654,6 +1654,8 @@ impl App {
             };
             hashes.insert(spec.hash.clone());
             let Ok(st) = t.stats(&spec.hash) else {
+                // Out of the session (released when it finished): no check is running.
+                i.torrent_check = None;
                 continue;
             };
             // Keep the session's in-memory checking progress visible for stopped/complete
