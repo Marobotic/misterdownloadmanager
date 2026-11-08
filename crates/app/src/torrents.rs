@@ -926,11 +926,17 @@ impl Run {
         });
     }
 
-    /// Stop: pause it (the pieces stay; starting again continues).
+    /// Stop: a completed run leaves the session; an incomplete one pauses to resume later.
     pub fn cancel(&self) {
         *self.stopped.lock().unwrap() = true;
         if let Some(t) = self.session() {
-            self.pause_in_background(&t);
+            if t.stats(&self.hash)
+                .is_ok_and(|s| s.phase == Phase::Finished)
+            {
+                self.remove_in_background(&t);
+            } else {
+                self.pause_in_background(&t);
+            }
         }
     }
 

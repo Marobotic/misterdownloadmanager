@@ -1679,6 +1679,8 @@ impl App {
                 changed = true;
             }
             let (hash, up) = (spec.hash.clone(), spec.upload_limit);
+            let stop_after_recheck = !self.settings.torrent_keep_sharing
+                || crate::torrents::sharing_limit_reached(spec, st.done, limits).is_some();
             if i.live.is_none() {
                 let _ = t.set_torrent_limits(&hash, None, up);
             }
@@ -1709,6 +1711,12 @@ impl App {
                     let whole = st.total > 0 && st.done >= st.total;
                     if whole {
                         i.status = Status::Complete;
+                        if report && i.live.is_none() && stop_after_recheck {
+                            let t2 = t.clone();
+                            self.rt.spawn(async move {
+                                let _ = t2.remove(&hash, false).await;
+                            });
+                        }
                     } else if i.status == Status::Complete {
                         i.status = Status::Stopped;
                         let t2 = t.clone();
@@ -3303,8 +3311,16 @@ impl App {
         }
     }
 
-    /// The info hashes of the torrents in the list (the torrent session keeps only these).
+    /// The info hashes of every torrent in the list (also used to prevent duplicate adds).
     fn torrent_hashes(&self) -> std::collections::HashSet<String> {
+        self.items
+            .iter()
+            .filter_map(|i| i.torrent.as_ref().map(|t| t.hash.clone()))
+            .collect()
+    }
+
+    /// The hashes librqbit should keep or restore in its session.
+    fn session_hashes(&self) -> std::collections::HashSet<String> {
         let limits = self.settings.sharing_limits();
         self.items
             .iter()
@@ -3371,7 +3387,7 @@ impl App {
             source,
             remote,
             self.torrent_host.clone(),
-            self.torrent_hashes(),
+            self.session_hashes(),
             self.downloads.clone(),
             self.settings.category_dirs.clone(),
             &self.rt,
@@ -3572,11 +3588,17 @@ impl App {
 
     /// Start a torrent: the session adds or resumes it.
     fn start_torrent(&mut self, id: u64, show: bool) {
-        let known = self.torrent_hashes();
-        let share = self.settings.torrent_keep_sharing;
+        let auto_share = self.settings.torrent_keep_sharing;
+        let known = self.session_hashes();
         let limit = self.settings.speed_limit();
         let (host, rt) = (self.torrent_host.clone(), self.rt.clone());
         let Some(item) = self.item(id) else { return };
+        // An explicit Start on a completed download means seed it, even when automatic
+        // keep sharing is off. It remains in the session until Stop or a sharing limit.
+        let share = auto_share
+            || item
+                .size
+                .is_some_and(|size| size > 0 && item.downloaded >= size);
         // Its own remembered limit first, as a file download's (#39).
         let limit = item.own_limit.or(limit);
         let Some(spec) = item.torrent.clone() else {
@@ -3691,7 +3713,7 @@ impl App {
     fn rss_look_up(&mut self, rule: u64, feed: u64, article: crate::rss::Article) {
         let (host, known, out) = (
             self.torrent_host.clone(),
-            self.torrent_hashes(),
+            self.session_hashes(),
             self.rss_events.clone(),
         );
         self.rt.spawn(async move {
@@ -3849,7 +3871,7 @@ impl App {
     }
 
     fn torrent_act(&mut self, id: u64, act: crate::torrents::Act) {
-        let known = self.torrent_hashes();
+        let known = self.session_hashes();
         let Some(spec) = self
             .items
             .iter()
@@ -4199,7 +4221,7 @@ impl App {
             let (out, host, known) = (
                 slot.clone(),
                 self.torrent_host.clone(),
-                self.torrent_hashes(),
+                self.session_hashes(),
             );
             self.rt.spawn(async move {
                 let res = match host.session(known).await {
@@ -7822,7 +7844,7 @@ impl App {
             if self.settings.torrent_keep_sharing {
                 self.torrent_host.set_sharing(
                     &self.rt,
-                    self.torrent_hashes(),
+                    self.session_hashes(),
                     self.complete_torrents(),
                     true,
                 );
@@ -7861,7 +7883,7 @@ impl App {
                     {
                         self.torrent_host.set_sharing(
                             &self.rt,
-                            self.torrent_hashes(),
+                            self.session_hashes(),
                             self.complete_torrents(),
                             true,
                         );
@@ -7870,7 +7892,7 @@ impl App {
                         self.settings.torrent_keep_sharing = share;
                         self.torrent_host.set_sharing(
                             &self.rt,
-                            self.torrent_hashes(),
+                            self.session_hashes(),
                             self.complete_torrents(),
                             share,
                         );
