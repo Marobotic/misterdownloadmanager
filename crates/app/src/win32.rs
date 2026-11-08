@@ -4433,7 +4433,7 @@ mod dwrite {
 
         pub fn glyph(&mut self, req: &SystemGlyphRequest<'_>) -> Option<SystemGlyph> {
             let id = u16::try_from(req.glyph_id).ok()?;
-            if !(req.size_px > 0.0) {
+            if req.size_px.is_nan() || req.size_px <= 0.0 {
                 return None;
             }
             let face = self.face(req.font_data, req.index)?;
