@@ -30,6 +30,8 @@ Everything below ships together, in version 0.5.0.
 - ✅ **View → Interface size**: every window larger, 100 % to 200 %, with Ctrl + / Ctrl − / Ctrl 0
   as in a browser; a window larger than the screen scrolls. Sharper text on Windows (part of
   [#262](https://github.com/anefzaoui/misterdownloadmanager/issues/262))
+- ✅ Windows: text drawn by DirectWrite, sharp at 9 pt and evenly spaced (egui keeps the layout;
+  [#262](https://github.com/anefzaoui/misterdownloadmanager/issues/262))
 - ✅ Linux: Update now asks the package manager which package MDM is; a copy installed by
   another package manager (pacman) is left to the system's updates, with a plain message
 - ✅ Linux: the .deb and .rpm install the browsers' host files for everyone and remove them on
@@ -282,8 +284,10 @@ Everything below ships together, in version 0.5.0.
   protected, never downloaded ([#38](https://github.com/anefzaoui/misterdownloadmanager/issues/38))
 - ✅ Torrents: RSS feeds with download rules (words, episodes, each episode once, a folder per rule)
   ([#39](https://github.com/anefzaoui/misterdownloadmanager/issues/39))
-- ✅ Torrents: Recheck, Reannounce, Add trackers and Copy magnet link; files chosen while a
-  torrent runs; a `.torrent` file's web address opens Add torrent ([#39](https://github.com/anefzaoui/misterdownloadmanager/issues/39))
+- ✅ Torrents: Recheck, Reannounce, Add trackers and Copy magnet link; choose files while a
+  torrent runs, or in Torrent → Files… for any torrent (stopped or complete too); a check of the
+  files says "Checking 42%"; a finished torrent that isn't shared lets go of its files; a
+  `.torrent` file's web address opens Add torrent ([#39](https://github.com/anefzaoui/misterdownloadmanager/issues/39))
 - ✅ Link grabber: links in packages, looked up for name and size; archives (zip and tar
   built in; 7z and RAR need 7-Zip) extracted when they are downloaded
   ([#37](https://github.com/anefzaoui/misterdownloadmanager/issues/37)); collecting copied links
