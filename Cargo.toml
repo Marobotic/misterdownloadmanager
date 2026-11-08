@@ -204,14 +204,14 @@ librqbit-peer-protocol = { git = "https://github.com/anefzaoui/rqbit.git", rev =
 librqbit-sha1-wrapper = { git = "https://github.com/anefzaoui/rqbit.git", rev = "ef50d87f4a9d5be9e3951b74f722433f9b46bd76" }
 librqbit-tracker-comms = { git = "https://github.com/anefzaoui/rqbit.git", rev = "ef50d87f4a9d5be9e3951b74f722433f9b46bd76" }
 librqbit-upnp = { git = "https://github.com/anefzaoui/rqbit.git", rev = "ef50d87f4a9d5be9e3951b74f722433f9b46bd76" }
-ecolor = { git = "https://github.com/anefzaoui/egui.git", rev = "517027e916d11183b65b0cd9e5066154dbc7324b" }
-emath = { git = "https://github.com/anefzaoui/egui.git", rev = "517027e916d11183b65b0cd9e5066154dbc7324b" }
-epaint = { git = "https://github.com/anefzaoui/egui.git", rev = "517027e916d11183b65b0cd9e5066154dbc7324b" }
-epaint_default_fonts = { git = "https://github.com/anefzaoui/egui.git", rev = "517027e916d11183b65b0cd9e5066154dbc7324b" }
-egui = { git = "https://github.com/anefzaoui/egui.git", rev = "517027e916d11183b65b0cd9e5066154dbc7324b" }
-egui-winit = { git = "https://github.com/anefzaoui/egui.git", rev = "517027e916d11183b65b0cd9e5066154dbc7324b" }
-egui_glow = { git = "https://github.com/anefzaoui/egui.git", rev = "517027e916d11183b65b0cd9e5066154dbc7324b" }
-egui-wgpu = { git = "https://github.com/anefzaoui/egui.git", rev = "517027e916d11183b65b0cd9e5066154dbc7324b" }
-egui_extras = { git = "https://github.com/anefzaoui/egui.git", rev = "517027e916d11183b65b0cd9e5066154dbc7324b" }
-eframe = { git = "https://github.com/anefzaoui/egui.git", rev = "517027e916d11183b65b0cd9e5066154dbc7324b" }
+ecolor = { path = "../misterdownloadmanager-egui/crates/ecolor" }
+emath = { path = "../misterdownloadmanager-egui/crates/emath" }
+epaint = { path = "../misterdownloadmanager-egui/crates/epaint" }
+epaint_default_fonts = { path = "../misterdownloadmanager-egui/crates/epaint_default_fonts" }
+egui = { path = "../misterdownloadmanager-egui/crates/egui" }
+egui-winit = { path = "../misterdownloadmanager-egui/crates/egui-winit" }
+egui_glow = { path = "../misterdownloadmanager-egui/crates/egui_glow" }
+egui-wgpu = { path = "../misterdownloadmanager-egui/crates/egui-wgpu" }
+egui_extras = { path = "../misterdownloadmanager-egui/crates/egui_extras" }
+eframe = { path = "../misterdownloadmanager-egui/crates/eframe" }
 winit = { git = "https://github.com/storytold/winit.git", rev = "a517b3846ee8457d84ee4975110bfda6797c44dc" }
