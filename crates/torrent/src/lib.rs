@@ -458,7 +458,13 @@ pub struct Torrents {
     adding: tokio::sync::Mutex<()>,
     /// librqbit's saved state (`session.json`, and each torrent's .torrent and piece map).
     session_dir: PathBuf,
+    /// Each checking torrent's bytes checked and when they last moved: librqbit leaves a check
+    /// it was asked to pause in Initializing, its count frozen, which isn't checking any more.
+    checks: std::sync::Mutex<std::collections::HashMap<String, (u64, std::time::Instant)>>,
 }
+
+/// A paused torrent whose checked bytes haven't moved for this long has stopped checking.
+const CHECK_HALTED_AFTER: Duration = Duration::from_secs(5);
 
 /// The lowest limit a torrent can have, bytes/s: librqbit's limiter holds one second's budget
 /// and asks it for a whole 16 KiB block at once; under that, every request fails and each peer
@@ -582,6 +588,7 @@ impl Torrents {
             proxied,
             adding: tokio::sync::Mutex::new(()),
             session_dir: cfg.state_dir.join("session"),
+            checks: Default::default(),
         })
     }
 
@@ -715,12 +722,22 @@ impl Torrents {
         let live = s.live.as_ref();
         let mib = |m: f64| m * 1024.0 * 1024.0;
         let phase = match s.state {
-            TorrentStatsState::Initializing { .. } => Phase::Checking,
+            // Paused while checking: librqbit stopped the check (it stays Initializing).
+            TorrentStatsState::Initializing { paused } => {
+                if paused && self.check_halted(hash, s.progress_bytes) {
+                    Phase::Paused
+                } else {
+                    Phase::Checking
+                }
+            }
             TorrentStatsState::Paused => Phase::Paused,
             TorrentStatsState::Error => Phase::Error,
             TorrentStatsState::Live if s.finished => Phase::Finished,
             TorrentStatsState::Live => Phase::Downloading,
         };
+        if !matches!(s.state, TorrentStatsState::Initializing { .. }) {
+            self.checks.lock().unwrap().remove(hash);
+        }
         Ok(Stats {
             phase,
             checked: (phase == Phase::Checking).then_some(s.progress_bytes),
@@ -798,10 +815,35 @@ impl Torrents {
 
     pub async fn pause(&self, hash: &str) -> Result<(), TorrentError> {
         let h = self.session.get(id(hash)?).ok_or(TorrentError::Unknown)?;
-        if matches!(h.stats().state, TorrentStatsState::Paused) {
-            return Ok(());
+        match h.stats().state {
+            TorrentStatsState::Paused => Ok(()),
+            // librqbit pausing a check stops it where it is and leaves the torrent Initializing
+            // for good (a Recheck stuck at 17 %): the check ends first, then it is paused.
+            TorrentStatsState::Initializing { .. } => {
+                let session = self.session.clone();
+                tokio::spawn(async move {
+                    if h.wait_until_initialized().await.is_ok()
+                        && !matches!(h.stats().state, TorrentStatsState::Paused)
+                    {
+                        let _ = session.pause(&h).await;
+                    }
+                });
+                Ok(())
+            }
+            _ => self.session.pause(&h).await.map_err(engine),
         }
-        self.session.pause(&h).await.map_err(engine)
+    }
+
+    /// Whether a paused torrent's check has stopped: its bytes checked haven't moved for
+    /// [`CHECK_HALTED_AFTER`].
+    fn check_halted(&self, hash: &str, checked: u64) -> bool {
+        let now = std::time::Instant::now();
+        let mut checks = self.checks.lock().unwrap();
+        let seen = checks.entry(hash.to_owned()).or_insert((checked, now));
+        if seen.0 != checked {
+            *seen = (checked, now);
+        }
+        now.duration_since(seen.1) >= CHECK_HALTED_AFTER
     }
 
     /// Start it again. One still checking its files (added paused, or restored at start) is
@@ -809,10 +851,15 @@ impl Torrents {
     /// stayed paused (seen on Linux, where the check took longer than the call).
     pub async fn resume(&self, hash: &str) -> Result<(), TorrentError> {
         let h = self.session.get(id(hash)?).ok_or(TorrentError::Unknown)?;
-        if matches!(h.stats().state, TorrentStatsState::Initializing { .. }) {
+        let st = h.stats();
+        // A check librqbit stopped (paused while checking) never ends by itself: starting the
+        // torrent starts the check again. One still checking is waited for, as above.
+        let halted = matches!(st.state, TorrentStatsState::Initializing { paused: true })
+            && self.check_halted(hash, st.progress_bytes);
+        if matches!(st.state, TorrentStatsState::Initializing { .. }) && !halted {
             h.wait_until_initialized().await.map_err(engine)?;
         }
-        if !matches!(h.stats().state, TorrentStatsState::Paused) {
+        if !halted && !matches!(h.stats().state, TorrentStatsState::Paused) {
             return Ok(());
         }
         self.session.unpause(&h).await.map_err(engine)
@@ -1571,6 +1618,39 @@ mod tests {
         );
         seeder.stop().await;
         leecher.stop().await;
+    }
+
+    /// Paused while it checks its files, a torrent finishes the check and is then paused:
+    /// librqbit's own pause stopped the check and left it Initializing for good, which the app
+    /// showed as "Checking 17%" forever.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    async fn pausing_during_the_check_lets_it_finish() {
+        let tmp = tempfile::tempdir().unwrap();
+        let src = tmp.path().join("seed");
+        std::fs::create_dir_all(&src).unwrap();
+        std::fs::write(src.join("big.bin"), vec![7u8; 256 * 1024 * 1024]).unwrap();
+        let torrent = make_torrent(&src).await;
+        let session = Torrents::start(offline(&tmp.path().join("session")))
+            .await
+            .unwrap();
+        let hash = session
+            .add(&torrent, &src, None, Vec::new(), false)
+            .await
+            .unwrap();
+        session.pause(&hash).await.unwrap();
+        let deadline = std::time::Instant::now() + Duration::from_secs(60);
+        loop {
+            let st = session.stats(&hash).unwrap();
+            if st.phase == Phase::Paused && st.done == st.total {
+                break;
+            }
+            assert!(
+                std::time::Instant::now() < deadline,
+                "the check never finished: {st:?}"
+            );
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+        session.stop().await;
     }
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
