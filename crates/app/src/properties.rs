@@ -442,6 +442,7 @@ impl Properties {
             && winui::button_light(
                 ui,
                 r(o, 170.0, 390.0, 78.0, 21.0),
+                // i18n: File Properties button that opens the selected torrent's file list
                 "Files...",
                 ButtonKind::Normal,
                 false,

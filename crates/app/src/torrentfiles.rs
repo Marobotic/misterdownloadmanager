@@ -19,16 +19,21 @@ impl TorrentFiles {
     pub fn new(item: &Item, host: &crate::torrents::Host) -> Option<Self> {
         let spec = item.torrent.as_ref()?;
         let session = host.get().and_then(|t| {
-            t.files(&spec.hash)
-                .map(|(files, chosen, _)| (files, chosen))
+            let (files, chosen, _) = t.files(&spec.hash)?;
+            let file_done = t
+                .stats(&spec.hash)
+                .map(|stats| stats.file_done)
+                .unwrap_or_default();
+            Some((files, chosen, file_done))
         });
-        let (files, chosen) = if let Some((files, chosen)) = session {
-            (files, chosen)
+        let (files, chosen, session_done) = if let Some((files, chosen, file_done)) = session {
+            (files, chosen, Some(file_done))
         } else {
             let bytes = std::fs::read(crate::torrents::torrent_file(&spec.hash)?).ok()?;
             (
                 mdm_torrent::files_from_bytes(&bytes).ok()?,
                 spec.files.clone(),
+                None,
             )
         };
         let root = if files.iter().filter(|f| !f.padding).count() > 1 {
@@ -45,6 +50,8 @@ impl TorrentFiles {
                 let chosen = chosen.as_ref().is_none_or(|v| v.contains(&i));
                 let done = if complete {
                     f.size
+                } else if let Some(file_done) = &session_done {
+                    file_done.get(i).copied().unwrap_or(0).min(f.size)
                 } else {
                     std::fs::metadata(root.join(&f.path))
                         .map(|m| m.len().min(f.size))
@@ -71,6 +78,7 @@ impl TorrentFiles {
         let outcome = dialogs::window(
             ctx,
             &format!("torrent-files-{}", self.id),
+            // i18n: title of the separate window listing a torrent's files
             "Torrent files",
             [548.0, 430.0],
             false,
@@ -78,6 +86,7 @@ impl TorrentFiles {
             |ui, o| {
                 let p = ui.painter().clone();
                 let mut all = self.rows.iter().all(|r| r.2);
+                // i18n: check or uncheck all file rows in the torrent file list
                 let response = winui::checkbox(
                     ui,
                     o + egui::vec2(20.0, 249.0),
@@ -101,6 +110,7 @@ impl TorrentFiles {
                             f.path.display().to_string(),
                             crate::model::size(f.size),
                             if !on {
+                                // i18n: status of a torrent file the user chose not to download
                                 crate::i18n::t("Skipped").into()
                             } else {
                                 crate::i18n::percent(
@@ -171,6 +181,7 @@ impl TorrentFiles {
                 if winui::button(
                     ui,
                     r(o, folder_at, 407.0, 75.0, 22.0),
+                    // i18n: button that opens the torrent's containing folder in the file manager
                     "Open folder",
                     ButtonKind::Normal,
                     false,
@@ -183,6 +194,7 @@ impl TorrentFiles {
                 let close = winui::button(
                     ui,
                     r(o, close_at, 407.0, 72.0, 22.0),
+                    // i18n: button that closes the torrent file list window
                     "Close",
                     ButtonKind::Normal,
                     false,
