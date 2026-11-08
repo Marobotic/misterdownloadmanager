@@ -1673,7 +1673,7 @@ impl App {
             {
                 let (t2, hash) = (t.clone(), spec.hash.clone());
                 self.rt.spawn(async move {
-                    let _ = t2.pause(&hash).await;
+                    let _ = t2.remove(&hash, false).await;
                 });
                 stopped = Some(why);
                 changed = true;
@@ -3305,8 +3305,17 @@ impl App {
 
     /// The info hashes of the torrents in the list (the torrent session keeps only these).
     fn torrent_hashes(&self) -> std::collections::HashSet<String> {
+        let limits = self.settings.sharing_limits();
         self.items
             .iter()
+            .filter(|i| {
+                i.status != Status::Complete
+                    || (self.settings.torrent_keep_sharing
+                        && i.torrent.as_ref().is_some_and(|spec| {
+                            crate::torrents::sharing_limit_reached(spec, i.downloaded, limits)
+                                .is_none()
+                        }))
+            })
             .filter_map(|i| i.torrent.as_ref().map(|t| t.hash.clone()))
             .collect()
     }

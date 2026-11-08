@@ -1555,6 +1555,38 @@ mod tests {
         leecher.stop().await;
     }
 
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    async fn removing_finished_torrent_releases_file_while_session_runs() {
+        let tmp = tempfile::tempdir().unwrap();
+        let src = tmp.path().join("seed");
+        std::fs::create_dir_all(&src).unwrap();
+        std::fs::write(src.join("data.bin"), vec![42u8; 64 * 1024]).unwrap();
+        let torrent = make_torrent(&src).await;
+        let session = Torrents::start(offline(&tmp.path().join("session")))
+            .await
+            .unwrap();
+        let hash = session
+            .add(&torrent, &src, None, Vec::new(), false)
+            .await
+            .unwrap();
+        let deadline = std::time::Instant::now() + Duration::from_secs(20);
+        while session.stats(&hash).unwrap().phase != Phase::Finished {
+            assert!(
+                std::time::Instant::now() < deadline,
+                "torrent never finished"
+            );
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+
+        session.remove(&hash, false).await.unwrap();
+        let original = src.join("data.bin");
+        let moved = src.join("released.bin");
+        std::fs::rename(&original, &moved).unwrap();
+        assert!(moved.is_file());
+        assert!(session.listen_addr().is_some(), "session remains running");
+        session.stop().await;
+    }
+
     /// #39: a torrent's piece order is librqbit's in-order one until set; set, it is kept when
     /// the torrent is added again (Add trackers, Recheck).
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
