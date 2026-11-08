@@ -159,6 +159,42 @@ begin
   end;
 end;
 
+{ The version already installed (for this user or for everyone), '' on a first install. }
+function InstalledVersion: String;
+var
+  Key: String;
+begin
+  Key := 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{667DB4D8-32C2-4487-A0E5-5825BF29778C}_is1';
+  if not RegQueryStringValue(HKCU, Key, 'DisplayVersion', Result) then
+    if not RegQueryStringValue(HKLM, Key, 'DisplayVersion', Result) then
+      Result := '';
+end;
+
+{ Over an installed MDM the setup says Update (Reinstall for the same version) instead of
+  Install, and shows the version change, e.g. "Mister Download Manager 0.5.0 -> 0.5.1". }
+procedure CurPageChanged(CurPageID: Integer);
+var
+  Old, Verb, Versions: String;
+begin
+  Old := InstalledVersion;
+  if Old = '' then Exit;
+  if Old = '{#AppVersion}' then Verb := 'Reinstall' else Verb := 'Update';
+  if Old = '{#AppVersion}' then
+    Versions := '{#AppName} {#AppVersion}'
+  else
+    Versions := '{#AppName} ' + Old + ' ' + #$2192 + ' {#AppVersion}';
+  WizardForm.Caption := Verb + ' {#AppName}';
+  if CurPageID = wpReady then begin
+    WizardForm.PageNameLabel.Caption := 'Ready to ' + Lowercase(Verb);
+    WizardForm.PageDescriptionLabel.Caption := Versions;
+    WizardForm.ReadyLabel.Caption := 'Click ' + Verb + ' to ' + Lowercase(Verb) + ' ' + Versions + '. Your download list and settings stay as they are.';
+    WizardForm.NextButton.Caption := Verb;
+  end else if CurPageID = wpInstalling then begin
+    if Verb = 'Update' then WizardForm.PageNameLabel.Caption := 'Updating' else WizardForm.PageNameLabel.Caption := 'Reinstalling';
+    WizardForm.PageDescriptionLabel.Caption := Versions;
+  end;
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   ExitRunningApp(ExpandConstant('{app}\{#AppExe}'));
