@@ -1620,6 +1620,53 @@ mod tests {
         leecher.stop().await;
     }
 
+    /// The app's Recheck of a finished torrent that left the session: added again paused, it
+    /// checks every piece and ends Paused and whole. Also after a restart of the session.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    async fn recheck_of_a_released_torrent_checks_it_all() {
+        let tmp = tempfile::tempdir().unwrap();
+        let src = tmp.path().join("seed");
+        std::fs::create_dir_all(&src).unwrap();
+        std::fs::write(src.join("big.bin"), vec![9u8; 512 * 1024 * 1024]).unwrap();
+        let torrent = make_torrent(&src).await;
+        let state = tmp.path().join("session");
+        let wait = |t: &Torrents, hash: &str, what: &str| {
+            let deadline = std::time::Instant::now() + Duration::from_secs(60);
+            let mut last = None;
+            loop {
+                let st = t.stats(hash).unwrap();
+                if st.phase == Phase::Paused && st.done == st.total {
+                    return;
+                }
+                if last.as_ref() != Some(&(st.phase, st.done)) {
+                    eprintln!("{what}: {:?} {} / {}", st.phase, st.done, st.total);
+                    last = Some((st.phase, st.done));
+                }
+                assert!(std::time::Instant::now() < deadline, "{what}: stuck at {st:?}");
+                std::thread::sleep(Duration::from_millis(50));
+            }
+        };
+        let s1 = Torrents::start(offline(&state)).await.unwrap();
+        let hash = s1.add(&torrent, &src, None, Vec::new(), true).await.unwrap();
+        wait(&s1, &hash, "first check");
+        // Released when finished, then Recheck adds it again paused.
+        s1.remove(&hash, false).await.unwrap();
+        s1.add(&torrent, &src, None, Vec::new(), true).await.unwrap();
+        wait(&s1, &hash, "recheck after release");
+        // Recheck while it is in the session (readd).
+        s1.readd(&hash, &torrent, true).await.unwrap();
+        wait(&s1, &hash, "recheck in session");
+        s1.stop().await;
+        // A new session restores it (session.json); the app removes it, then Recheck adds it.
+        let s2 = Torrents::start(offline(&state)).await.unwrap();
+        for h in s2.hashes() {
+            s2.remove(&h, false).await.unwrap();
+        }
+        s2.add(&torrent, &src, None, Vec::new(), true).await.unwrap();
+        wait(&s2, &hash, "recheck after restart");
+        s2.stop().await;
+    }
+
     /// Paused while it checks its files, a torrent finishes the check and is then paused:
     /// librqbit's own pause stopped the check and left it Initializing for good, which the app
     /// showed as "Checking 17%" forever.
