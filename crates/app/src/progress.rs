@@ -1119,22 +1119,7 @@ impl Progress {
                     })
                     .collect();
                 let ticks: Vec<bool> = d.files.iter().map(|f| f.2).collect();
-                let clicked = table(
-                    ui,
-                    p,
-                    o,
-                    "t-files",
-                    // i18n: column titles: File (name), Size, Done (how much is downloaded)
-                    &[
-                        (25.0, crate::i18n::mark("File")),
-                        (335.0, crate::i18n::mark("Size")),
-                        (430.0, crate::i18n::mark("Done")),
-                    ],
-                    &[330.0, 425.0],
-                    &rows,
-                    true,
-                    Some(&ticks),
-                );
+                let clicked = files_table(ui, p, o, "t-files", &rows, &ticks);
                 // A box ticked or unticked (#39): the torrent downloads those files from now
                 // on; the last one ticked can't be unticked (a torrent of nothing).
                 if let Some(row) = clicked {
@@ -1420,6 +1405,32 @@ fn piece_grid(p: &egui::Painter, o: Pos2, pieces: &[bool]) {
             c,
         );
     }
+}
+
+/// Draw the shared torrent file table used by the progress tab and the standalone file window.
+pub(crate) fn files_table(
+    ui: &mut Ui,
+    p: &egui::Painter,
+    o: Pos2,
+    id: &str,
+    rows: &[Vec<String>],
+    checks: &[bool],
+) -> Option<usize> {
+    table(
+        ui,
+        p,
+        o,
+        id,
+        &[
+            (25.0, crate::i18n::mark("File")),
+            (335.0, crate::i18n::mark("Size")),
+            (430.0, crate::i18n::mark("Done")),
+        ],
+        &[330.0, 425.0],
+        rows,
+        true,
+        Some(checks),
+    )
 }
 
 /// A table in the connections table's frame: headers at x, column lines at `seps`, rows of

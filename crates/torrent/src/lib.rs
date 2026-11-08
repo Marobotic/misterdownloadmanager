@@ -93,6 +93,21 @@ pub fn magnet_link(torrent: &[u8]) -> Option<String> {
     Some(link)
 }
 
+/// Read the safe file list from a saved torrent without starting a session.
+pub fn files_from_bytes(torrent: &[u8]) -> Result<Vec<FileEntry>, TorrentError> {
+    check_bytes(torrent)?;
+    let meta = librqbit::torrent_from_bytes(torrent).map_err(|_| TorrentError::NotATorrent)?;
+    let info = meta.info.data.validate().map_err(engine)?;
+    Ok(info
+        .iter_file_details()
+        .map(|f| FileEntry {
+            path: f.filename.to_pathbuf(),
+            size: f.len,
+            padding: f.attrs().padding,
+        })
+        .collect())
+}
+
 /// Before librqbit restores its saved torrents (`session.json` and a `<hash>.torrent` for each,
 /// in `dir`), take out the ones the name check refuses, and those saved without their .torrent
 /// (whose names it can't check): the app adds those again itself, through `add` and its own
