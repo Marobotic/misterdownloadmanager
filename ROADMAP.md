@@ -506,10 +506,15 @@ These ship in a later version, when they're ready.
   so a download a page starts by itself stays with Safari. Built and its relay to the helper
   checked in the sandbox Safari uses; still to check in Safari itself, signed with a Developer ID
 
+- 🔄 The browser extension's media list naming a file after its page, as an option: in review
 - 🔄 Malay: a native speaker's check of the menus, toolbar and list columns: in review
 
 ### Bugs being looked into
 
+- 🔄 Download File Info staying open but invisible, with later browser downloads waiting behind
+  it ([#440](https://github.com/anefzaoui/misterdownloadmanager/issues/440)): fix in review
+- 🔄 Arabic and other non-Latin file names saved unreadable, from Firefox and browsers built on it
+  ([#447](https://github.com/anefzaoui/misterdownloadmanager/issues/447)): fix in review
 - 🔄 A file renamed to avoid a clash still showing and opening under its old name
   ([#442](https://github.com/anefzaoui/misterdownloadmanager/issues/442)): fix in review
 - 🔄 RSS feeds: the rule boxes losing the keyboard after each key
