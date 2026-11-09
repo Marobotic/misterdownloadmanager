@@ -13,6 +13,18 @@ Everything below ships together, in version 0.5.0.
 
 ### Done
 
+- ✅ Fast downloads keep going on a slow disk: flushing the resume state no longer holds up
+  the connections, and a connection is never replaced for the disk's wait
+  ([#361](https://github.com/anefzaoui/misterdownloadmanager/issues/361))
+- ✅ Freeze reports taken after the window has already answered say so, instead of blaming a deadlock
+  (part of [#355](https://github.com/anefzaoui/misterdownloadmanager/issues/355))
+- ✅ **Move/Rename** works on several selected downloads at once: pick a folder and they all go there
+  ([#333](https://github.com/anefzaoui/misterdownloadmanager/issues/333))
+- ✅ Download video shows the size of a plain file (what the server says), not "size unknown"
+  (part of [#320](https://github.com/anefzaoui/misterdownloadmanager/issues/320))
+- ✅ Download video on pages whose player first loads a manifest's address answering something else
+  (SVT Play): the real manifest goes to MDM, not that first answer
+  ([#377](https://github.com/anefzaoui/misterdownloadmanager/issues/377))
 - ✅ Menus on compositors that animate windows (Hyprland): no border and no slide-in, and going from
   title to title moves one window, so nothing fades; the reporter confirmed it
   ([#277](https://github.com/anefzaoui/misterdownloadmanager/issues/277))
@@ -30,6 +42,9 @@ Everything below ships together, in version 0.5.0.
 - ✅ **View → Interface size**: every window larger, 100 % to 200 %, with Ctrl + / Ctrl − / Ctrl 0
   as in a browser; a window larger than the screen scrolls. Sharper text on Windows (part of
   [#262](https://github.com/anefzaoui/misterdownloadmanager/issues/262))
+- ✅ Windows: sharp, evenly spaced text at every interface size: letters no longer run together
+  or drift apart ([#323](https://github.com/anefzaoui/misterdownloadmanager/issues/323),
+  [#334](https://github.com/anefzaoui/misterdownloadmanager/issues/334))
 - ✅ Linux: Update now asks the package manager which package MDM is; a copy installed by
   another package manager (pacman) is left to the system's updates, with a plain message
 - ✅ Linux: the .deb and .rpm install the browsers' host files for everyone and remove them on
@@ -119,6 +134,16 @@ Everything below ships together, in version 0.5.0.
 - ✅ More file types taken from the browser by default: DMG, PKG, DEB, RPM, APPIMAGE, MSIX, APPX,
   CAB, JAR, XZ, ZST, WEBM, FLAC, OPUS and others; a list never edited gains them
   ([#208](https://github.com/anefzaoui/misterdownloadmanager/issues/208))
+- ✅ Far more file types taken by default: AI models and datasets, 3D and CAD, design and camera
+  RAW, ebooks, Office, disk images and split archives; a list never edited gains them
+  ([#382](https://github.com/anefzaoui/misterdownloadmanager/issues/382))
+- ✅ A save folder relative to the home folder is found where it really is
+- ✅ Browser link import: tighter handling of site data
+- ✅ The extension asks for a newer MDM only when a whole release separates them, not over a
+  bug-fix version
+- ✅ Add URL: a YouTube playlist opens the video window; Dailymotion's embedded player is looked
+  up as the video's own page ([#338](https://github.com/anefzaoui/misterdownloadmanager/issues/338),
+  [#359](https://github.com/anefzaoui/misterdownloadmanager/issues/359))
 - ✅ Windows: Download File Info and the progress window open in front of the browser, even when
   Windows doesn't let MDM take the foreground; the keyboard stays where it was until a click
   ([#208](https://github.com/anefzaoui/misterdownloadmanager/issues/208))
@@ -444,6 +469,11 @@ These ship in a later version, when they're ready.
 
 ### Being built
 
+- 🔄 macOS: video look-ups in a copy of MDM a browser downloaded, without the Terminal command
+  ([#330](https://github.com/anefzaoui/misterdownloadmanager/issues/330),
+  [#339](https://github.com/anefzaoui/misterdownloadmanager/issues/339)): yt-dlp's folder build,
+  unpacked once and checked against its signed list; built and checked on macOS, still to
+  confirm on a person's Mac
 - 🔄 Help: when an antivirus or VirusTotal flags MDM
 - 🔄 Linux, what's left ([#164](https://github.com/anefzaoui/misterdownloadmanager/issues/164)):
   screen readers (Orca) reading MDM's windows; browsers installed as a Flatpak (Firefox from
@@ -451,8 +481,29 @@ These ship in a later version, when they're ready.
   (`MDM_WAYLAND=1`) placing their menus, which needs popup windows the window library doesn't
   have yet, so XWayland stays the default; Vulkan as the default renderer (below)
 
+- 🔄 The Safari extension (macOS), part of the app: a click on a link to a listed file type, the
+  right-click items, the button over videos, Media on this page and the toolbar button, from one
+  source with the other browsers' extension. Safari gives extensions no way to see its downloads,
+  so a download a page starts by itself stays with Safari. Built and its relay to the helper
+  checked in the sandbox Safari uses; still to check in Safari itself, signed with a Developer ID
+
 ### Bugs being looked into
 
+- 🔄 RSS feeds: the rule boxes losing the keyboard after each key
+  ([#353](https://github.com/anefzaoui/misterdownloadmanager/issues/353)): fix in review
+- 🔄 Video progress at 100 % while still downloading, and long encoded strings as file names
+  ([#344](https://github.com/anefzaoui/misterdownloadmanager/issues/344),
+  [#345](https://github.com/anefzaoui/misterdownloadmanager/issues/345)): fix in review
+- 🔄 A page that starts a download by script being saved instead of the file
+  ([#374](https://github.com/anefzaoui/misterdownloadmanager/issues/374)): fix in review
+- 🔍 A site's bot check refusing MDM's request (testfile.org, a Cloudflare challenge): the\n  message now says so ([#376](https://github.com/anefzaoui/misterdownloadmanager/issues/376)); a way to hand the download back to the browser is still to decide
+- 🔄 A download starting again by itself after Stop, when it is in a running queue\n  ([#341](https://github.com/anefzaoui/misterdownloadmanager/issues/341)): fix in review
+- 🔄 A crash when removing the last feed in the RSS feeds window
+  ([#321](https://github.com/anefzaoui/misterdownloadmanager/issues/321)): fix in review
+- 🔄 **Open folder** on a torrent still downloading
+  ([#354](https://github.com/anefzaoui/misterdownloadmanager/issues/354)): fix in review
+- 🔄 Alt and F10 opening the menu bar with a control focused
+  ([#328](https://github.com/anefzaoui/misterdownloadmanager/issues/328)): fix in review
 - 🔄 Crash on Windows when a window opens while MDM falls back from Direct3D to OpenGL
   ([#337](https://github.com/anefzaoui/misterdownloadmanager/issues/337)): fix in review
 - 🔄 Crash on Windows when a screen goes away while MDM runs
