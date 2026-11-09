@@ -192,7 +192,10 @@ impl TorrentFiles {
                         .data(|d| d.get_temp::<usize>(table_id))
                         .unwrap_or(0);
                     let row = ((pos.y - body_top) / 17.0).floor() as isize + first as isize;
-                    if pos.y >= body_top
+                    // Past the row's check box and short of the scroll bar.
+                    let on_a_name = pos.x >= o.x + 42.0 && pos.x < o.x + 511.0;
+                    if on_a_name
+                        && pos.y >= body_top
                         && pos.y < body_bottom
                         && row >= 0
                         && let Some((_, file, _, _)) = self.rows.get(row as usize)
@@ -205,7 +208,8 @@ impl TorrentFiles {
                     ui,
                     r(o, open_at, 407.0, 75.0, 22.0),
                     "Open",
-                    if self.complete {
+                    // Nothing says which of several files: those open by a double click.
+                    if self.complete && self.rows.len() == 1 {
                         ButtonKind::Normal
                     } else {
                         ButtonKind::Disabled
@@ -216,6 +220,7 @@ impl TorrentFiles {
                 .clicked();
                 if open
                     && self.complete
+                    && self.rows.len() == 1
                     && let Some((_, f, _, _)) = self.rows.first()
                 {
                     dialogs::open_file(&self.base.join(&f.path));

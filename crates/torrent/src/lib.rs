@@ -461,6 +461,9 @@ pub struct Torrents {
     /// Each checking torrent's bytes checked and when they last moved: librqbit leaves a check
     /// it was asked to pause in Initializing, its count frozen, which isn't checking any more.
     checks: std::sync::Mutex<std::collections::HashMap<String, (u64, std::time::Instant)>>,
+    /// Torrents waiting for their check to end before they pause ([`Torrents::pause`]); a Start
+    /// meanwhile takes the pause back ([`Torrents::resume`]).
+    pause_after_check: Arc<std::sync::Mutex<std::collections::HashSet<String>>>,
 }
 
 /// A paused torrent whose checked bytes haven't moved for this long has stopped checking.
@@ -589,6 +592,7 @@ impl Torrents {
             adding: tokio::sync::Mutex::new(()),
             session_dir: cfg.state_dir.join("session"),
             checks: Default::default(),
+            pause_after_check: Default::default(),
         })
     }
 
@@ -821,8 +825,13 @@ impl Torrents {
             // for good (a Recheck stuck at 17 %): the check ends first, then it is paused.
             TorrentStatsState::Initializing { .. } => {
                 let session = self.session.clone();
+                let (wanted, hash) = (self.pause_after_check.clone(), hash.to_owned());
+                wanted.lock().unwrap().insert(hash.clone());
                 tokio::spawn(async move {
-                    if h.wait_until_initialized().await.is_ok()
+                    let checked = h.wait_until_initialized().await.is_ok();
+                    let still_wanted = wanted.lock().unwrap().remove(&hash);
+                    if checked
+                        && still_wanted
                         && !matches!(h.stats().state, TorrentStatsState::Paused)
                     {
                         let _ = session.pause(&h).await;
@@ -851,6 +860,8 @@ impl Torrents {
     /// stayed paused (seen on Linux, where the check took longer than the call).
     pub async fn resume(&self, hash: &str) -> Result<(), TorrentError> {
         let h = self.session.get(id(hash)?).ok_or(TorrentError::Unknown)?;
+        // A pause waiting for the check to end is taken back: the last click wins.
+        self.pause_after_check.lock().unwrap().remove(hash);
         let st = h.stats();
         // A check librqbit stopped (paused while checking) never ends by itself: starting the
         // torrent starts the check again. One still checking is waited for, as above.
@@ -1642,16 +1653,24 @@ mod tests {
                     eprintln!("{what}: {:?} {} / {}", st.phase, st.done, st.total);
                     last = Some((st.phase, st.done));
                 }
-                assert!(std::time::Instant::now() < deadline, "{what}: stuck at {st:?}");
+                assert!(
+                    std::time::Instant::now() < deadline,
+                    "{what}: stuck at {st:?}"
+                );
                 std::thread::sleep(Duration::from_millis(50));
             }
         };
         let s1 = Torrents::start(offline(&state)).await.unwrap();
-        let hash = s1.add(&torrent, &src, None, Vec::new(), true).await.unwrap();
+        let hash = s1
+            .add(&torrent, &src, None, Vec::new(), true)
+            .await
+            .unwrap();
         wait(&s1, &hash, "first check");
         // Released when finished, then Recheck adds it again paused.
         s1.remove(&hash, false).await.unwrap();
-        s1.add(&torrent, &src, None, Vec::new(), true).await.unwrap();
+        s1.add(&torrent, &src, None, Vec::new(), true)
+            .await
+            .unwrap();
         wait(&s1, &hash, "recheck after release");
         // Recheck while it is in the session (readd).
         s1.readd(&hash, &torrent, true).await.unwrap();
@@ -1662,7 +1681,9 @@ mod tests {
         for h in s2.hashes() {
             s2.remove(&h, false).await.unwrap();
         }
-        s2.add(&torrent, &src, None, Vec::new(), true).await.unwrap();
+        s2.add(&torrent, &src, None, Vec::new(), true)
+            .await
+            .unwrap();
         wait(&s2, &hash, "recheck after restart");
         s2.stop().await;
     }
@@ -1697,6 +1718,42 @@ mod tests {
             );
             tokio::time::sleep(Duration::from_millis(100)).await;
         }
+        session.stop().await;
+    }
+
+    /// A Start clicked during the check takes back the pause clicked before it.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    async fn starting_during_the_check_takes_the_pause_back() {
+        let tmp = tempfile::tempdir().unwrap();
+        let src = tmp.path().join("seed");
+        std::fs::create_dir_all(&src).unwrap();
+        std::fs::write(src.join("big.bin"), vec![5u8; 256 * 1024 * 1024]).unwrap();
+        let torrent = make_torrent(&src).await;
+        let session = Torrents::start(offline(&tmp.path().join("session")))
+            .await
+            .unwrap();
+        let hash = session
+            .add(&torrent, &src, None, Vec::new(), false)
+            .await
+            .unwrap();
+        session.pause(&hash).await.unwrap();
+        session.resume(&hash).await.unwrap();
+        let deadline = std::time::Instant::now() + Duration::from_secs(60);
+        loop {
+            let st = session.stats(&hash).unwrap();
+            if st.phase == Phase::Finished {
+                break;
+            }
+            assert!(st.phase != Phase::Paused, "the Start was lost: {st:?}");
+            assert!(
+                std::time::Instant::now() < deadline,
+                "never finished: {st:?}"
+            );
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+        // And it stays started.
+        tokio::time::sleep(Duration::from_secs(2)).await;
+        assert_eq!(session.stats(&hash).unwrap().phase, Phase::Finished);
         session.stop().await;
     }
 
