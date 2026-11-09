@@ -179,18 +179,7 @@ pub fn follow_system(ctx: &egui::Context) -> bool {
 /// uses plain coverage. The glyph atlas is shared, so this follows the main window's.
 pub fn apply_mode(ctx: &egui::Context) {
     let dark_surface = dark_surface();
-    // DirectWrite's glyphs come with Windows' own contrast already (win32.rs): thickened again,
-    // light-on-dark text would turn bold.
-    #[cfg(windows)]
-    let drawn_by_windows = {
-        crate::win32::install_text_rasterizer();
-        crate::win32::text_rasterizer_installed()
-    };
-    #[cfg(not(windows))]
-    let drawn_by_windows = false;
-    let tf = if drawn_by_windows {
-        egui::epaint::FontColorTransferFunction::Off
-    } else if dark_surface {
+    let tf = if dark_surface {
         egui::epaint::FontColorTransferFunction::DARK_MODE_DEFAULT
     } else {
         egui::epaint::FontColorTransferFunction::LIGHT_MODE_DEFAULT
@@ -614,19 +603,17 @@ fn fonts(ctx: &egui::Context, code: &str, all: bool) {
     text_styles(ctx);
 }
 
-/// Windows' fonts drawn as sharp as Windows draws them (#262): every glyph drawn by DirectWrite
-/// (win32.rs `install_text_rasterizer`), started on a whole pixel. egui's own rasterizer left the
-/// upright strokes of Segoe UI and Tahoma two pixels wide and grey at 9 pt, and grid-fitting them
-/// across (Mono hinting) spaced the letters unevenly. Mono stays for a system without DirectWrite's
-/// in-memory fonts, and for the glyphs egui still draws (marks clustered with their letter).
-/// Linux's and macOS's fonts keep egui's default (often unhinted fonts; a Mac's screen is dense
-/// enough).
+/// Windows' fonts drawn as sharp as Windows draws them (#262): each glyph grid-fitted across too
+/// (the fonts' own hinting, as Windows runs it for its grey text), and started on a whole pixel.
+/// egui hints only up and down by default and places glyphs at quarter pixels, which left the
+/// upright strokes of Segoe UI and Tahoma two pixels wide and grey at 9 pt: text read as blurred,
+/// most at 100 % and 125 %. Letters keep their unhinted advances, so a word can show a pixel more
+/// or less between two letters. Linux's and macOS's fonts keep egui's default (often unhinted
+/// fonts; a Mac's screen is dense enough).
 #[cfg(windows)]
 fn sharp_text(defs: &mut egui::FontDefinitions) {
-    crate::win32::install_text_rasterizer();
     for data in defs.font_data.values_mut() {
         let data = std::sync::Arc::make_mut(data);
-        data.tweak.system_rasterizer = true;
         data.tweak.hinting_target = egui::epaint::text::HintingTarget::Mono;
         data.tweak.subpixel_binning = Some(false);
     }

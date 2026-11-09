@@ -76,9 +76,6 @@ wgpu = { version = "30.0", default-features = false, features = ["dx12", "wgsl"]
 # Drag the downloaded file out of Download complete (OLE drag and drop).
 drag = "2.1.1"
 raw-window-handle = "0.6"
-# The text drawn by DirectWrite (win32.rs `install_text_rasterizer`, #262): its COM interfaces,
-# which windows-sys doesn't have. The windows 0.62 wgpu-hal already builds.
-windows = { version = "0.62", default-features = false, features = ["Win32_Graphics_DirectWrite"] }
 
 # The notification-area icon and its menu (tray.rs).
 [target.'cfg(not(target_os = "linux"))'.dependencies]
