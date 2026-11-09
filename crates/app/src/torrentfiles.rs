@@ -43,11 +43,8 @@ impl TorrentFiles {
                 None,
             )
         };
-        let root = if files.iter().filter(|f| !f.padding).count() > 1 {
-            spec.folder.join(&item.file_name)
-        } else {
-            spec.folder.clone()
-        };
+        // `folder` already holds a torrent of several files' own folder (Meta::folder_in).
+        let root = spec.folder.clone();
         let complete = item.status == Status::Complete;
         let rows: Vec<_> = files
             .into_iter()
